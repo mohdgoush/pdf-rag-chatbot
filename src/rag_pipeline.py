@@ -11,7 +11,17 @@ client = Groq(
 
 def generate_response(query, retrieved_chunks, chat_history):
 
-    context = "\n\n".join(retrieved_chunks)
+    context = ""
+
+    for chunk in retrieved_chunks:
+
+        context += f"""
+    Page Number: {chunk['page']}
+
+    Content:
+    {chunk['text']}
+
+    """
 
     history = ""
 

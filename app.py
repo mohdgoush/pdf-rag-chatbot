@@ -65,38 +65,44 @@ if "chunks" not in st.session_state:
 
 
 # FILE UPLOAD
-uploaded_file = st.file_uploader(
-    "📂 Upload your PDF",
-    type="pdf"
+uploaded_files = st.file_uploader(
+    "📂 Upload your PDFs",
+    type="pdf",
+    accept_multiple_files=True
 )
 
+if uploaded_files:
 
-if uploaded_file:
+    all_pages = []
 
-    # Save PDF
-    pdf_path = f"data/{uploaded_file.name}"
+    for uploaded_file in uploaded_files:
 
-    with open(pdf_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+        pdf_path = f"data/{uploaded_file.name}"
 
-    # PDF Info
-    st.info(f"📘 Uploaded File: {uploaded_file.name}")
+        with open(pdf_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-    # PROCESS PDF
-    with st.spinner("⚙️ Processing PDF..."):
+        st.info(f"📘 Uploaded: {uploaded_file.name}")
 
-        text = extract_text_from_pdf(pdf_path)
+        with st.spinner(f"Processing {uploaded_file.name}..."):
 
-        chunks = chunk_text(text)
+            pages = extract_text_from_pdf(
+                pdf_path,
+                uploaded_file.name
+            )
 
-        embeddings = create_embeddings(chunks)
+            all_pages.extend(pages)
 
-        vector_store = create_vector_store(embeddings)
+    chunks = chunk_text(all_pages)
 
-        st.session_state.vector_store = vector_store
-        st.session_state.chunks = chunks
+    embeddings = create_embeddings(chunks)
 
-    st.success("✅ PDF processed successfully!")
+    vector_store = create_vector_store(embeddings)
+
+    st.session_state.vector_store = vector_store
+    st.session_state.chunks = chunks
+
+    st.success("✅ All PDFs processed successfully!")
 
     st.markdown("---")
 
@@ -140,7 +146,6 @@ if uploaded_file:
             retrieved_chunks,
             st.session_state.chat_history
         )
-
         # ASSISTANT MESSAGE
         with st.chat_message("assistant"):
 
@@ -158,6 +163,18 @@ if uploaded_file:
                 message_placeholder.markdown(full_response + "▌")
 
             message_placeholder.markdown(full_response)
+
+        with st.expander("📚 Sources"):
+
+            for chunk in retrieved_chunks:
+
+                st.write(
+                    f"📄 {chunk['source']} — Page {chunk['page']}"
+                )
+
+                st.write(chunk["text"][:300] + "...")
+
+                st.markdown("---")
 
         # SAVE RESPONSE
         st.session_state.chat_history.append(
