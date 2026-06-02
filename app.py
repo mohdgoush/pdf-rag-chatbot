@@ -1,6 +1,7 @@
 from src.pdf_reader import extract_text_from_pdf
 from src.chunking import chunk_text
 from src.embeddings import create_embeddings
+from src.vector_store import create_vector_store
 
 
 pdf_path = "data/IET_lucknow_guideline_pdf.pdf"
@@ -11,10 +12,8 @@ chunks = chunk_text(text)
 
 embeddings = create_embeddings(chunks)
 
-print(f"Total Chunks: {len(chunks)}")
+vector_store = create_vector_store(embeddings)
 
-print(f"Embedding Shape: {embeddings.shape}")
+print("FAISS Vector Store Created Successfully!")
 
-print("\nFirst Embedding Vector:\n")
-
-print(embeddings[0])
+print(f"Total vectors stored: {vector_store.ntotal}")
